@@ -1,4 +1,109 @@
-<!DOCTYPE html>
+<?php
+function getFileType( SplFileInfo $fi )
+{
+  $ext = pathinfo( $fi->getFilename(), PATHINFO_EXTENSION );
+  return $fi->isDir()
+    ? 'Dateiordner'
+    : ($ext === '' ? 'Datei' : ".{$ext}-Datei");
+}
+
+function getFileSize( SplFileInfo $fi )
+{
+  return $fi->isDir()
+    ? ''
+    : filesize_format( $fi->getSize() );
+}
+
+function getFileMTime( SplFileInfo $fi )
+{
+  return date( 'd.m.Y H:i', $fi->getMTime() );
+}
+
+function createRootLink( SplFileInfo $fi, $root )
+{
+  $fiRoot = new SplFileInfo( $root );
+  $aRootSegments = explode( DIRECTORY_SEPARATOR, $fiRoot->getRealPath() );
+  $aSegments = explode( DIRECTORY_SEPARATOR, $fi->getRealPath() );
+
+  $strRootPath = implode('/', $aRootSegments);
+  $strFilePath = implode('/', $aSegments);
+
+  return '?root='.substr($strFilePath, strlen($strRootPath)+1);
+}
+
+function createParentLink( $requestedPath, $ROOT_PATH )
+{
+  $fi = new SplFileInfo( $requestedPath );
+  return createRootLink( new SplFileInfo($fi->getPath()), $ROOT_PATH );
+}
+
+function getFileDepth( SplFileInfo $fi, $root )
+{
+  $fiRoot = new SplFileInfo( $root );
+  $aRootSegments = explode( DIRECTORY_SEPARATOR, $fiRoot->getRealPath() );
+  $aSegments = explode( DIRECTORY_SEPARATOR, $fi->getRealPath() );
+  return count($aSegments) - count($aRootSegments) - 1;
+}
+
+function filesize_format($size, $sizes = array('Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'))
+{
+  if ($size == 0) return('n/a');
+  return (round($size/pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $sizes[$i]);
+}
+
+function getList( $path )
+{
+  $aFolders = array();
+  $aFiles = array();
+
+  $it = new DirectoryIterator( $path );
+  foreach($it as $dirIter)
+  {
+    if ($dirIter->isDot()) {
+      continue;
+    }
+
+    if ($dirIter->isDir()) {
+      $aFolders[$dirIter->getBasename()] = $dirIter->getFileInfo();
+    }
+
+    if ($dirIter->isFile())
+    {
+      $ext = '.' . pathinfo($dirIter->getFilename(), PATHINFO_EXTENSION);
+      $aFiles[$dirIter->getBasename($ext)] = $dirIter->getFileInfo();
+    }
+  }
+
+  $aRetVal = array();
+
+  ksort( $aFolders );
+  foreach ($aFolders as $fileInfo)
+  {
+    $aRetVal = array_merge(
+      $aRetVal,
+      array( $fileInfo ),
+      getList( $fileInfo->getPathname() )
+    );
+  }
+
+  ksort( $aFiles );
+  $aRetVal = array_merge( $aRetVal, array_values($aFiles) );
+
+  return $aRetVal;
+}
+
+
+$ROOT_PATH = realpath( __DIR__ . '/..' );
+
+$requestedPath = $ROOT_PATH;
+if (isset($_GET['root']) && strpos($_GET['root'],'..') === false && !empty($_GET['root']) && file_exists("{$ROOT_PATH}/{$_GET['root']}"))
+{
+  $requestedPath = "{$ROOT_PATH}/{$_GET['root']}";
+}
+
+$aFileInfo = getList( $requestedPath );
+
+?><!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
@@ -15,6 +120,34 @@
             body {
                 padding-top: 60px;
                 padding-bottom: 40px;
+            }
+
+            tr.depth-1 > td:first-child {
+              padding-left: 15px;
+            }
+            tr.depth-2 > td:first-child {
+              padding-left: 25px;
+            }
+            tr.depth-3 > td:first-child {
+              padding-left: 35px;
+            }
+            tr.depth-4 > td:first-child {
+              padding-left: 45px;
+            }
+            tr.depth-5 > td:first-child {
+              padding-left: 55px;
+            }
+            tr.depth-6 > td:first-child {
+              padding-left: 65px;
+            }
+            tr.depth-7 > td:first-child {
+              padding-left: 75px;
+            }
+            tr.depth-8 > td:first-child {
+              padding-left: 85px;
+            }
+            tr.depth-9 > td:first-child {
+              padding-left: 95px;
             }
         </style>
         <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
@@ -69,68 +202,32 @@
         <div class="container">
 
 
+          <div class="row">
+            <div class="span12">
+              <h2>HTML based hierarchical grid data</h2>
+              <p>
+                How would you display hierarchical grid data if there was no
+                JavaScript available? I can think of two ways:
+              </p>
+            </div>
+          </div>
 
-          <?php
-          function filesize_format($size, $sizes = array('Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'))
-          {
-            if ($size == 0) return('n/a');
-            return (round($size/pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $sizes[$i]);
-          }
-
-          // TODO, we also need full filepath/ depth.
-          function getList( $path )
-          {
-            $aFolders = array();
-            $aFiles = array();
-
-            $it = new DirectoryIterator( $path );
-            foreach($it as $dirIter)
-            {
-              if ($dirIter->isDot()) {
-                continue;
-              }
-
-              if ($dirIter->isDir()) {
-                $aFolders[$dirIter->getBasename()] = $dirIter->getPathname();
-              }
-
-              if ($dirIter->isFile())
-              {
-                $ext = '.' . pathinfo($dirIter->getFilename(), PATHINFO_EXTENSION);
-                $aFiles[$dirIter->getBasename($ext)] = $dirIter->getFilename();
-              }
-            }
-
-            $aRetVal = array();
-
-            ksort( $aFolders );
-            foreach ($aFolders as $basename => $pathname)
-            {
-              $aRetVal = array_merge(
-                $aRetVal,
-                array( $basename ),
-                getList( $pathname )
-              );
-            }
-
-            ksort( $aFiles );
-            $aRetVal = array_merge( $aRetVal, array_values($aFiles) );
-
-            return $aRetVal;
-          }
-
-          $path = realpath(__DIR__ . '/..');
-          $aFilePaths = getList( $path );
-
-          ?>
+          <div class="row">
+            <div class="span12">
+              <h3>Collapsed, with links to navigate</h3>
+              <p>
+                How would you display hierarchical grid data if there was no
+                JavaScript available? I can think of two ways:
+              </p>
+            </div>
+          </div>
 
           <table class="table table-striped table-bordered table-hover table-condensed">
 
-            <caption>Dateien in "<?php echo $path; ?>":</caption>
+            <caption>Files in "<?php echo $requestedPath; ?>" (collapsed, no js):</caption>
 
             <thead>
               <tr>
-                <td></td>
                 <td>Name</td>
                 <td>Modified</td>
                 <td>Type</td>
@@ -140,13 +237,68 @@
 
             <tbody>
 
-              <?php foreach ($aFilePaths as $fileName): ?>
+              <?php if ($requestedPath !== $ROOT_PATH): ?>
               <tr>
+                <td>
+                  <a <?php echo 'href="'.  createParentLink($requestedPath,$ROOT_PATH).'"' ?>>
+                    ..
+                  </a>
+                </td>
                 <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <?php endif; ?>
+
+              <?php/* @var $fileInfo SplFileInfo */ ?>
+              <?php foreach ($aFileInfo as $fileInfo): ?>
+              <?php $depth = getFileDepth($fileInfo,$requestedPath); ?>
+              <?php if ($depth > 0) continue; ?>
+              <tr>
+                <td>
+                  <?php if ($fileInfo->isDir()): ?>
+                  <a <?php echo 'href="'.  createRootLink($fileInfo,$ROOT_PATH).'"' ?>>
+                    <?php echo $fileInfo->getFileName(); ?>
+                  </a>
+                  <?php else: ?>
+                  <?php echo $fileInfo->getFileName(); ?>
+                  <?php endif; ?>
+                </td>
+                <td><?php echo getFileMTime($fileInfo); ?></td>
+                <td><?php echo getFileType($fileInfo); ?></td>
+                <td><?php echo getFileSize($fileInfo); ?></td>
+              </tr>
+              <?php endforeach; ?>
+
+            </tbody>
+
+          </table>
+
+
+
+          <table class="table table-striped table-bordered table-hover table-condensed">
+
+            <caption>Files in "<?php echo $requestedPath; ?>" (fully expanded, no js):</caption>
+
+            <thead>
+              <tr>
+                <td>Name</td>
+                <td>Modified</td>
+                <td>Type</td>
+                <td>Size</td>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              <?php/* @var $fileInfo SplFileInfo */ ?>
+              <?php foreach ($aFileInfo as $fileInfo): ?>
+              <?php $depth = getFileDepth($fileInfo,$ROOT_PATH); ?>
+              <tr class="<?php echo "depth-$depth"; ?>">
                 <td><?php echo $fileInfo->getFileName(); ?></td>
-                <td><?php echo date('d.m.Y H:i', $fileInfo->getMTime()); ?></td>
-                <td><?php echo $fileInfo->isDir() ? 'Dateiordner' : '.'.pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION).'-Datei'; ?></td>
-                <td><?php echo $fileInfo->isDir() ? '' : filesize_format($fileInfo->getSize()); ?></td>
+                <td><?php echo getFileMTime($fileInfo); ?></td>
+                <td><?php echo getFileType($fileInfo); ?></td>
+                <td><?php echo getFileSize($fileInfo); ?></td>
               </tr>
               <?php endforeach; ?>
 
