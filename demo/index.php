@@ -216,8 +216,13 @@ $aFileInfo = getList( $requestedPath );
             <div class="span12">
               <h3>Collapsed, with links to navigate</h3>
               <p>
-                How would you display hierarchical grid data if there was no
-                JavaScript available? I can think of two ways:
+                This method is good for large trees, or for graphs. At any
+                time, you represent only one level to the user. He can then
+                navigate to other levels by following hyperlinks.
+              </p>
+              <p>
+                With this method, there are no limitations rearding depth.
+                There is no need for css markup.
               </p>
             </div>
           </div>
@@ -274,7 +279,24 @@ $aFileInfo = getList( $requestedPath );
 
           </table>
 
+          
 
+          <div class="row">
+            <div class="span12">
+              <h3>Fully expanded</h3>
+              <p>
+                This method is good for smaller trees. You can give the user a
+                quick overview of the whole tree content. There is no need for
+                navigational logic, but you will have to find a way to
+                visualize the parent/ child relationships between the the rows.
+                The method below adds css classes to the rows, that describe
+                the depth of each row in the tree. Each css class has a
+                different margin-left value, which causes the tree-like look.
+                With this method, the maximum depth of the tree you can display
+                is bound to the number of css classes you define.
+              </p>
+            </div>
+          </div>
 
           <table class="table table-striped table-bordered table-hover table-condensed">
 
@@ -307,7 +329,52 @@ $aFileInfo = getList( $requestedPath );
           </table>
 
 
+          <div class="row">
+            <div class="span12">
+              <h2>JavaScript on top</h2>
+              <p>
+                A JavaScript solution should build on top of this, provide a
+                better experience for users with js enabled. It shouldn't
+                require any extra markup. Where needed, we'll pass additional
+                information to the jQuery plugin. I think this is cleaner than
+                attaching it to html, from where the plugin would then read it
+                back.
+              </p>
+            </div>
+          </div>
+          
+          <table id="example-1" class="table table-striped table-bordered table-hover table-condensed">
 
+            <caption>Files in "<?php echo $requestedPath; ?>" (js, from fully expanded):</caption>
+
+            <thead>
+              <tr>
+                <td>Name</td>
+                <td>Modified</td>
+                <td>Type</td>
+                <td>Size</td>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              <?php/* @var $fileInfo SplFileInfo */ ?>
+              <?php foreach ($aFileInfo as $fileInfo): ?>
+              <?php $depth = getFileDepth($fileInfo,$ROOT_PATH); ?>
+              <tr class="<?php echo "depth-$depth"; ?>">
+                <td><?php echo $fileInfo->getFileName(); ?></td>
+                <td><?php echo getFileMTime($fileInfo); ?></td>
+                <td><?php echo getFileType($fileInfo); ?></td>
+                <td><?php echo getFileSize($fileInfo); ?></td>
+              </tr>
+              <?php endforeach; ?>
+
+            </tbody>
+
+          </table>
+
+          <!-- see main.js for plugin invocation -->
+          
           <hr>
 
           <footer>
@@ -319,8 +386,11 @@ $aFileInfo = getList( $requestedPath );
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.8.0.min.js"><\/script>')</script>
 
+        <!-- TODO include jquery ui -->
+        
         <script src="js/vendor/bootstrap.min.js"></script>
-
+        
+        <script src="../jquery.simpleTreeGrid.js"></script>
         <script src="js/main.js"></script>
     </body>
 </html>
