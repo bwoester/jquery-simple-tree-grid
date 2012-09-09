@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<project basedir="." default="compile">
+
+  <!--
+  <property
+    name="google-closure-compiler"
+    location="${lib.dir}/google-closure/compiler.jar"
+    />
+  -->
+
+  <property
+    name="google-closure-compiler"
+    location="D:\share\ant\google-closure\compiler.jar"
+    />
+
+  <taskdef
+    name="jscomp"
+    classname="com.google.javascript.jscomp.ant.CompileTask"
+    classpath="${google-closure-compiler}"
+    />
+
+  <target name="compile">
+
+    <jscomp
+      compilationLevel="simple"
+      warning="verbose"
+      debug="false"
+      output="../jquery.simpleTreeGrid.js"
+      >
+
+      <externs dir="${basedir}/externs">
+        <file name="jquery-1.7.js"/>
+        <file name="custom.js"/>
+      </externs>
+
+      <sources dir="${basedir}">
+        <file name="jquery.simpleTreeGrid.js"/>
+        <file name="skiplist.js"/>
+      </sources>
+
+    </jscomp>
+
+  </target>
+
+</project>

@@ -2,6 +2,12 @@
  * @see "http://coding.smashingmagazine.com/2011/10/11/essential-jquery-plugin-patterns/"
  */
 
+/**
+ * @param {function (new:jQuery, (Object|null|string)=, (Object.<(function (jQuery.event=): ?|string)>|null)=): jQuery} $
+ * @param {Window} window
+ * @param {Document} document
+ * @param {?=} undefined
+ */
 ;(function ( $, window, document, undefined ) {
 
     // define your widget under a namespace of your choice
@@ -49,12 +55,14 @@
             // [uiObject] )
             // eg. this._trigger( "hover", e /*where e.type ==
             // "mouseenter"*/, { hovered: $(e.target)});
+            var value = 42;
             this._trigger('methodA', event, {
                 key: value
             });
         },
 
         methodA: function ( event ) {
+            var value = 42;
             this._trigger('dataChanged', event, {
                 key: value
             });
