@@ -24,7 +24,7 @@
 
 
 /**
- * @param {Window} window
+ * @param {!Window} window
  * @param {?=} undefined, don't pass a value for this param).
  */
 ;(function ( window, undefined ) {

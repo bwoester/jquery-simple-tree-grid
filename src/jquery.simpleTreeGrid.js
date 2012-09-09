@@ -4,8 +4,8 @@
 
 /**
  * @param {function (new:jQuery, (Object|null|string)=, (Object.<(function (jQuery.event=): ?|string)>|null)=): jQuery} $
- * @param {Window} window
- * @param {Document} document
+ * @param {!Window} window
+ * @param {!HTMLDocument} document
  * @param {?=} undefined
  */
 ;(function ( $, window, document, undefined ) {
@@ -48,25 +48,28 @@ $.widget( "bwoester.simpleTreeGrid" , {
       // calling the base widget
   },
 
-        methodB: function ( event ) {
-            //_trigger dispatches callbacks the plugin user
-            // can subscribe to
-            // signature: _trigger( "callbackName" , [eventObject],
-            // [uiObject] )
-            // eg. this._trigger( "hover", e /*where e.type ==
-            // "mouseenter"*/, { hovered: $(e.target)});
-            var value = 42;
-            this._trigger('methodA', event, {
-                key: value
-            });
-        },
+  /**
+   * @this {jQuery.bwoester.simpleTreeGrid}
+   */
+  methodB: function ( event ) {
+      //_trigger dispatches callbacks the plugin user
+      // can subscribe to
+      // signature: _trigger( "callbackName" , [eventObject],
+      // [uiObject] )
+      // eg. this._trigger( "hover", e /*where e.type ==
+      // "mouseenter"*/, { hovered: $(e.target)});
+      var value = 42;
+      this._trigger('methodA', event, {
+          key: value
+      });
+  },
 
-        methodA: function ( event ) {
-            var value = 42;
-            this._trigger('dataChanged', event, {
-                key: value
-            });
-        },
+  methodA: function ( event ) {
+      var value = 42;
+      this._trigger('dataChanged', event, {
+          key: value
+      });
+  },
 
   // Respond to any changes the user makes to the
   // option method
