@@ -51,7 +51,9 @@ $.widget( "bwoester.simpleTreeGrid" , {
     var lastNode  = this._rootNode;
     var lastDepth = -1;
     var self = this;
-    this.element.find('> tbody > tr').each( function(i)
+    var rows = this.element.find('> tbody > tr');
+
+    rows.each( function(i)
     {
       var row   = $(this);
       var model = {};
@@ -86,7 +88,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
       {
         lastNode.getParent().getParent().addChild( node );
       }
-      
+
       // attach the node to the row.
       row.data( self.widgetName, {
         'node'    : node,
@@ -95,6 +97,10 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
       lastNode  = node;
       lastDepth = depth;
+    });
+
+    this.element.children('tbody').dblclick( function(eventObject) {
+      self.toggle( $(eventObject.target).closest('tr') );
     });
 
     // TODO: tree built, care for toggle branches
@@ -129,38 +135,62 @@ $.widget( "bwoester.simpleTreeGrid" , {
     rows.each( function(n) {
       var row     = $(this);
       var rowData = row.data( self.widgetName );
-      
+
       if (rowData['expanded']) {
         self._collapse( row );
       } else {
         self._expand( row );
       }
-    });    
+    });
   },
-  
+
   _collapse: function( row ) {
     var rowData = row.data( this.widgetName );
     var node    = rowData['node'];
-    
-    row = row.next();
-    for (var i = 0; i < node.getChildCount(); i++) {
-      row.hide('fast');
+    var i       = 0;
+
+    (function hideNextRow() {
+
       row = row.next();
-    }
-    
-    rowData['expanded'] = false;
+
+      var columns = row.children('td');
+      columns.wrapInner('<div style="display: block;" />');
+
+      var divs = row.find('> td > div');
+      $.when( divs.slideUp( 'fast') ).then(function()
+      {
+        row.hide();
+        divs.contents().unwrap();
+
+        // TODO fix - need recursive child count
+        //      what about already hidden rows? (collapsed sub branches)
+        if (++i < node.getChildCount()) {
+          hideNextRow();
+        } else {
+          rowData['expanded'] = false;
+        }
+      });
+
+    })();
+
+//    row = row.next();
+//    for (var i = 0; i < node.getChildCount(); i++) {
+//      row.hide('fast');
+//      row = row.next();
+//    }
+
   },
-  
+
   _expand: function( row ) {
     var rowData = row.data( this.widgetName );
     var node    = rowData['node'];
-    
+
     row = row.next();
     for (var i = 0; i < node.getChildCount(); i++) {
       row.show('fast');
       row = row.next();
     }
-    
+
     rowData['expanded'] = true;
   },
 
@@ -186,7 +216,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
           key: value
       });
   },
-  
+
   // Respond to any changes the user makes to the
   // option method
   _setOption: function ( key, value ) {
