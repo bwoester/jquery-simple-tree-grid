@@ -279,7 +279,7 @@ $aFileInfo = getList( $requestedPath );
 
           </table>
 
-          
+
 
           <div class="row">
             <div class="span12">
@@ -342,7 +342,7 @@ $aFileInfo = getList( $requestedPath );
               </p>
             </div>
           </div>
-          
+
           <table id="example-1" class="table table-striped table-bordered table-hover table-condensed">
 
             <caption>Files in "<?php echo $requestedPath; ?>" (js, from fully expanded):</caption>
@@ -358,9 +358,13 @@ $aFileInfo = getList( $requestedPath );
 
             <tbody>
 
-              <?php/* @var $fileInfo SplFileInfo */ ?>
-              <?php foreach ($aFileInfo as $fileInfo): ?>
-              <?php $depth = getFileDepth($fileInfo,$ROOT_PATH); ?>
+              <?php
+              $aDepth = array();
+              /* @var $fileInfo SplFileInfo */
+              foreach ($aFileInfo as $fileInfo):
+                $depth = getFileDepth($fileInfo,$ROOT_PATH);
+                $aDepth[] = $depth;
+              ?>
               <tr class="<?php echo "depth-$depth"; ?>">
                 <td><?php echo $fileInfo->getFileName(); ?></td>
                 <td><?php echo getFileMTime($fileInfo); ?></td>
@@ -373,8 +377,15 @@ $aFileInfo = getList( $requestedPath );
 
           </table>
 
+          <script>
+            var bwoester = bwoester || {};
+            bwoester.example_1 = bwoester.example_1 || {};
+            bwoester.example_1.columns = [ 'name', 'mtime', 'type', 'size' ];
+            bwoester.example_1.depthList = <?php echo json_encode($aDepth) ?>;
+          </script>
+
           <!-- see main.js for plugin invocation -->
-          
+
           <hr>
 
           <footer>
@@ -386,11 +397,14 @@ $aFileInfo = getList( $requestedPath );
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.8.0.min.js"><\/script>')</script>
 
-        <!-- TODO include jquery ui -->
-        
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-ui-1.8.23.min.js"><\/script>')</script>
+
         <script src="js/vendor/bootstrap.min.js"></script>
-        
-        <script src="../jquery.simpleTreeGrid.js"></script>
+
+        <script src="../src/closure-library/closure/goog/base.js"></script>
+        <script src="../src/jquery.simpleTreeGrid.js"></script>
+
         <script src="js/main.js"></script>
     </body>
 </html>

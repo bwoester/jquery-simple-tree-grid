@@ -1,1 +1,1 @@
-$("#example-1").simpleTreeGrid();
+$("#example-1").simpleTreeGrid( bwoester.example_1 );

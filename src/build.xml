@@ -22,10 +22,11 @@
   <target name="compile">
 
     <jscomp
-      compilationLevel="simple"
+      compilationLevel="whitespace"
       warning="verbose"
-      debug="false"
+      debug="true"
       output="../jquery.simpleTreeGrid.js"
+      prettyprint="true"
       >
 
       <externs dir="${basedir}/externs">
