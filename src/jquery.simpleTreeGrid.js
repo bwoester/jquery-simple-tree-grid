@@ -35,12 +35,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
      * Used to initialize tree grid from existing, fully expanded table.
      * @todo - could be an initilaizer plugin
      */
-    depthList: [],
-    /**
-     * Used to access the id of models. Defaults to a function that encodes the
-     * whole model to a json string.
-     */
-    getId: function(model) { return JSON.stringify(model); }
+    depthList: []
   },
 
   _rootNode: null,
@@ -68,10 +63,12 @@ $.widget( "bwoester.simpleTreeGrid" , {
         //       localized display)
         //       - provide encode/ decode methods for columns
         //       - or provide more raw data to the initializer
+        //       - or plugin? For simple use case (read only, no lazy loading)
+        //         it is okay...
         model[ self.options.columns[n] ] = $(this).text();
       });
 
-      var node  = new goog.structs.TreeNode( self.options.getId(model), model );
+      var node  = new goog.structs.TreeNode( null, model );
       var depth = self.options.depthList[i];
 
       // Depth increased. Add new node as child of lastNode
@@ -89,6 +86,12 @@ $.widget( "bwoester.simpleTreeGrid" , {
       {
         lastNode.getParent().getParent().addChild( node );
       }
+      
+      // attach the node to the row.
+      row.data( self.widgetName, {
+        'node'    : node,
+        'expanded': true  // TODO not necessarily right. Maybe better introduce tri-state.
+      });
 
       lastNode  = node;
       lastDepth = depth;
@@ -117,6 +120,50 @@ $.widget( "bwoester.simpleTreeGrid" , {
       // calling the base widget
   },
 
+  // TODO another extension point for plugins:
+  // - hide children?
+  // - remove them from DOM?
+  // - apply effects?
+  toggle: function( rows ) {
+    var self = this;
+    rows.each( function(n) {
+      var row     = $(this);
+      var rowData = row.data( self.widgetName );
+      
+      if (rowData['expanded']) {
+        self._collapse( row );
+      } else {
+        self._expand( row );
+      }
+    });    
+  },
+  
+  _collapse: function( row ) {
+    var rowData = row.data( this.widgetName );
+    var node    = rowData['node'];
+    
+    row = row.next();
+    for (var i = 0; i < node.getChildCount(); i++) {
+      row.hide('fast');
+      row = row.next();
+    }
+    
+    rowData['expanded'] = false;
+  },
+  
+  _expand: function( row ) {
+    var rowData = row.data( this.widgetName );
+    var node    = rowData['node'];
+    
+    row = row.next();
+    for (var i = 0; i < node.getChildCount(); i++) {
+      row.show('fast');
+      row = row.next();
+    }
+    
+    rowData['expanded'] = true;
+  },
+
   /**
    * @this {jQuery.bwoester.simpleTreeGrid}
    */
@@ -139,7 +186,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
           key: value
       });
   },
-
+  
   // Respond to any changes the user makes to the
   // option method
   _setOption: function ( key, value ) {

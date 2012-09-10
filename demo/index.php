@@ -93,7 +93,7 @@ function getList( $path )
 }
 
 
-$ROOT_PATH = realpath( __DIR__ . '/..' );
+$ROOT_PATH = realpath( __DIR__ );
 
 $requestedPath = $ROOT_PATH;
 if (isset($_GET['root']) && strpos($_GET['root'],'..') === false && !empty($_GET['root']) && file_exists("{$ROOT_PATH}/{$_GET['root']}"))
