@@ -22,6 +22,15 @@ goog.require('goog.structs.TreeNode');
 // existing widget prototype to inherit from, an object
 // literal to become the widget's prototype );
 
+var bwoester = bwoester || {};
+
+bwoester.ternary = bwoester.ternary || {};
+
+bwoester.ternary.TRUE     = 1;
+bwoester.ternary.FALSE    = 2;
+bwoester.ternary.UNKNOWN  = 3;
+
+
 $.widget( "bwoester.simpleTreeGrid" , {
 
   //Options to be used as defaults
@@ -46,12 +55,14 @@ $.widget( "bwoester.simpleTreeGrid" , {
    */
   _create: function () {
 
+    var self = this;
+
     this._rootNode = new goog.structs.TreeNode( '_root', null );
 
     var lastNode  = this._rootNode;
     var lastDepth = -1;
-    var self = this;
-    var rows = this.element.find('> tbody > tr');
+    var rows      = this.element.find('> tbody > tr');
+    var aExpandedNodes = [];
 
     rows.each( function(i)
     {
@@ -74,9 +85,11 @@ $.widget( "bwoester.simpleTreeGrid" , {
       var depth = self.options.depthList[i];
 
       // Depth increased. Add new node as child of lastNode
+      // Flag lastNode as being expanded
       if (depth > lastDepth)
       {
         lastNode.addChild( node );
+        aExpandedNodes.push( i - 1 );
       }
       // Depth remains the same. Add new node as sibling of lastNode
       else if (depth === lastDepth)
@@ -92,18 +105,26 @@ $.widget( "bwoester.simpleTreeGrid" , {
       // attach the node to the row.
       row.data( self.widgetName, {
         'node'    : node,
-        'expanded': true  // TODO not necessarily right. Maybe better introduce tri-state.
+        'expanded': bwoester.ternary.UNKNOWN
       });
 
       lastNode  = node;
       lastDepth = depth;
     });
 
+    // aExpandedNodes[0] will always be -1, our root node, which is expanded
+    // we don't support toggling the root node, so we start at index 1
+    for (var i = 1; i < aExpandedNodes.length; ++i)
+    {
+      var rowIndex = aExpandedNodes[i];
+      var row = $(rows[rowIndex]);
+      var aRowData = row.data( self.widgetName );
+      aRowData['expanded'] = bwoester.ternary.TRUE;
+    }
+
     this.element.children('tbody').dblclick( function(eventObject) {
       self.toggle( $(eventObject.target).closest('tr') );
     });
-
-    // TODO: tree built, care for toggle branches
 
     // _create will automatically run the first time
     // this widget is called. Put the initial widget
@@ -136,62 +157,82 @@ $.widget( "bwoester.simpleTreeGrid" , {
       var row     = $(this);
       var rowData = row.data( self.widgetName );
 
-      if (rowData['expanded']) {
+      // if expanded, collapse
+      if (rowData['expanded'] === bwoester.ternary.TRUE) {
         self._collapse( row );
-      } else {
+      // if not expanded, expand
+      } else if (rowData['expanded'] === bwoester.ternary.FALSE) {
+        self._expand( row );
+      // If we don't know, try to expand. This gives the widget a chance to
+      // lazy load children, even if it wasn't provided with infos about
+      // children
+      } else /* if (rowData['expanded'] === bwoester.ternary.UNKNOWN) */ {
         self._expand( row );
       }
     });
   },
 
+  /**
+   * Collapse all rows that contain to the branch. This includes sub branches.
+   */
   _collapse: function( row ) {
     var rowData = row.data( this.widgetName );
     var node    = rowData['node'];
-    var i       = 0;
-
-    (function hideNextRow() {
-
-      row = row.next();
-
-      var columns = row.children('td');
-      columns.wrapInner('<div style="display: block;" />');
-
-      var divs = row.find('> td > div');
-      $.when( divs.slideUp( 'fast') ).then(function()
-      {
-        row.hide();
-        divs.contents().unwrap();
-
-        // TODO fix - need recursive child count
-        //      what about already hidden rows? (collapsed sub branches)
-        if (++i < node.getChildCount()) {
-          hideNextRow();
-        } else {
-          rowData['expanded'] = false;
-        }
-      });
-
-    })();
-
-//    row = row.next();
-//    for (var i = 0; i < node.getChildCount(); i++) {
-//      row.hide('fast');
-//      row = row.next();
-//    }
-
-  },
-
-  _expand: function( row ) {
-    var rowData = row.data( this.widgetName );
-    var node    = rowData['node'];
+    var recursiveChildCount = (function getRecursiveChildCount(node) {
+      var retVal    = 0;
+      var children  = node.getChildren();
+      for (var i = 0; i < children.length; ++i) {
+        retVal += getRecursiveChildCount( children[i] );
+      }
+      return retVal + children.length;
+    })( node );
 
     row = row.next();
-    for (var i = 0; i < node.getChildCount(); i++) {
-      row.show('fast');
+    for (var i = 0; i < recursiveChildCount; ++i) {
+      row.hide('fast');
       row = row.next();
     }
 
-    rowData['expanded'] = true;
+    rowData['expanded'] = bwoester.ternary.FALSE;
+  },
+
+  /**
+   * Expand rows that belong to the branch. For sub branches, check their
+   * expanded flag.
+   */
+  _expand: function( row ) {
+    var self    = this;
+
+    var rowData = row.data( self.widgetName );
+    var node    = rowData['node'];
+
+    row = row.next();
+    for (var i = 0; i < node.getChildCount(); ++i)
+    {
+      row.show('fast');
+
+      (function showChildrenIfExpanded() {
+        var rowData = row.data( self.widgetName );
+        var node    = rowData['node'];
+
+        if (rowData['expanded'] === bwoester.ternary.TRUE) {
+          for (var i = 0; i < node.getChildCount(); ++i) {
+            row = row.next();
+            row.show('fast');
+            showChildrenIfExpanded();
+          }
+        } else {
+          for (var i = 0; i < node.getChildCount(); ++i) {
+            row = row.next();
+            showChildrenIfExpanded();
+          }
+        }
+      })();
+
+      row = row.next();
+    }
+
+    rowData['expanded'] = bwoester.ternary.TRUE;
   },
 
   /**
