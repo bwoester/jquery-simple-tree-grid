@@ -6,7 +6,22 @@
 // plugins are not closed properly.
 ;
 
-goog.require('goog.structs.TreeNode');
+// To calculate/ refresh/ update the dependency file, use
+//
+// > cd jquery-simple-tree-grid\src
+// jquery-simple-tree-grid\src> python.exe closure-library\closure\bin\build\depswriter.py \
+// jquery-simple-tree-grid\src> --root_with_prefix="simple-tree-grid ../../simple-tree-grid" \
+// jquery-simple-tree-grid\src> > simple-tree-grid\deps.js
+
+goog.require('bwoester.TreeNode');
+
+var bwoester = bwoester || {};
+
+bwoester.ternary = bwoester.ternary || {};
+
+bwoester.ternary.TRUE     = 1;
+bwoester.ternary.FALSE    = 2;
+bwoester.ternary.UNKNOWN  = 3;
 
 /**
  * @param {function (new:jQuery, (Object|null|string)=, (Object.<(function (jQuery.event=): ?|string)>|null)=): jQuery} $
@@ -22,15 +37,6 @@ goog.require('goog.structs.TreeNode');
 // existing widget prototype to inherit from, an object
 // literal to become the widget's prototype );
 
-var bwoester = bwoester || {};
-
-bwoester.ternary = bwoester.ternary || {};
-
-bwoester.ternary.TRUE     = 1;
-bwoester.ternary.FALSE    = 2;
-bwoester.ternary.UNKNOWN  = 3;
-
-
 $.widget( "bwoester.simpleTreeGrid" , {
 
   //Options to be used as defaults
@@ -44,7 +50,9 @@ $.widget( "bwoester.simpleTreeGrid" , {
      * Used to initialize tree grid from existing, fully expanded table.
      * @todo - could be an initilaizer plugin
      */
-    depthList: []
+    depthList: [],
+
+    plugins: []
   },
 
   _rootNode: null,
@@ -57,7 +65,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
     var self = this;
 
-    this._rootNode = new goog.structs.TreeNode( '_root', null );
+    this._rootNode = new bwoester.TreeNode( '_root', null );
 
     var lastNode  = this._rootNode;
     var lastDepth = -1;
@@ -81,7 +89,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
         model[ self.options.columns[n] ] = $(this).text();
       });
 
-      var node  = new goog.structs.TreeNode( null, model );
+      var node  = new bwoester.TreeNode( null, model );
       var depth = self.options.depthList[i];
 
       // Depth increased. Add new node as child of lastNode

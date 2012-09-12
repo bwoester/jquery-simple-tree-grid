@@ -403,7 +403,8 @@ $aFileInfo = getList( $requestedPath );
         <script src="js/vendor/bootstrap.min.js"></script>
 
         <script src="../src/closure-library/closure/goog/base.js"></script>
-        <script src="../src/jquery.simpleTreeGrid.js"></script>
+        <script src="../src/simple-tree-grid/deps.js"></script>
+        <script src="../src/simple-tree-grid/jquery.simpleTreeGrid.js"></script>
 
         <script src="js/main.js"></script>
     </body>

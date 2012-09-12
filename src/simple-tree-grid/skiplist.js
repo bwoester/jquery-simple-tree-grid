@@ -1,4 +1,5 @@
 /**
+ * @license
  * Copyright 2009 Google Inc.
  *
  * Copyright 2012 Benjamin Wöster
