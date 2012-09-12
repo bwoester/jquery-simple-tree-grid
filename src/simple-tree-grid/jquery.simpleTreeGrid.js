@@ -186,17 +186,9 @@ $.widget( "bwoester.simpleTreeGrid" , {
   _collapse: function( row ) {
     var rowData = row.data( this.widgetName );
     var node    = rowData['node'];
-    var recursiveChildCount = (function getRecursiveChildCount(node) {
-      var retVal    = 0;
-      var children  = node.getChildren();
-      for (var i = 0; i < children.length; ++i) {
-        retVal += getRecursiveChildCount( children[i] );
-      }
-      return retVal + children.length;
-    })( node );
 
     row = row.next();
-    for (var i = 0; i < recursiveChildCount; ++i) {
+    for (var i = 0; i < node.getRecursiveChildCount(); ++i) {
       row.hide('fast');
       row = row.next();
     }
@@ -223,14 +215,19 @@ $.widget( "bwoester.simpleTreeGrid" , {
         var rowData = row.data( self.widgetName );
         var node    = rowData['node'];
 
-        if (rowData['expanded'] === bwoester.ternary.TRUE) {
-          for (var i = 0; i < node.getChildCount(); ++i) {
+        if (rowData['expanded'] === bwoester.ternary.TRUE)
+        {
+          for (var i = 0; i < node.getChildCount(); ++i)
+          {
             row = row.next();
             row.show('fast');
             showChildrenIfExpanded();
           }
-        } else {
-          for (var i = 0; i < node.getChildCount(); ++i) {
+        }
+        else
+        {
+          for (var i = 0; i < node.getChildCount(); ++i)
+          {
             row = row.next();
             showChildrenIfExpanded();
           }
