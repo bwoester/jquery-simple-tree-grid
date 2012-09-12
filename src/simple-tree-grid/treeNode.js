@@ -16,16 +16,37 @@ bwoester.TreeNode = function( key, value ) {
 goog.inherits( bwoester.TreeNode, goog.structs.TreeNode );
 
 /**
- * @type {number}
  * @private
+ * @type {number}
  */
 bwoester.TreeNode.prototype.recursiveChildCount_ = 0;
 
 /**
+ * @public
  * @return {number} The number of children and grand children.
  */
 bwoester.TreeNode.prototype.getRecursiveChildCount = function() {
   return this.recursiveChildCount_;
+}
+
+/**
+ * @private
+ * @param {number}
+ */
+bwoester.TreeNode.prototype.increaseRecursiveChildCount_ = function(i) {
+  this.recursiveChildCount_ += i;
+  var parent = this.getParent();
+  if (parent) {
+    parent.increaseRecursiveChildCount_( i );
+  }
+}
+
+/**
+ * @private
+ * @param {number}
+ */
+bwoester.TreeNode.prototype.decreaseRecursiveChildCount_ = function(i) {
+  this.increaseRecursiveChildCount_( 0 - i );
 }
 
 /**
@@ -34,7 +55,7 @@ bwoester.TreeNode.prototype.getRecursiveChildCount = function() {
  * @override
  */
 bwoester.TreeNode.prototype.addChildAt = function(child, index) {
-  this.recursiveChildCount_ += (child.getRecursiveChildCount() + 1);
+  this.increaseRecursiveChildCount_( child.getRecursiveChildCount() + 1 );
   goog.base( this, 'addChildAt', child, index );
 };
 
@@ -47,7 +68,7 @@ bwoester.TreeNode.prototype.addChildAt = function(child, index) {
 bwoester.TreeNode.prototype.removeChildAt = function(index) {
   var removedChild = goog.base( this, 'removeChildAt', index );
   if (removedChild instanceof bwoester.TreeNode) {
-    this.recursiveChildCount_ -= (removedChild.getRecursiveChildCount() + 1);
+    this.decreaseRecursiveChildCount_( removedChild.getRecursiveChildCount() + 1 );
   }
   return removedChild;
 };
@@ -57,6 +78,6 @@ bwoester.TreeNode.prototype.removeChildAt = function(index) {
  * @override
  */
 bwoester.TreeNode.prototype.removeChildren = function() {
-  this.recursiveChildCount_ -= this.getRecursiveChildCount();
+  this.decreaseRecursiveChildCount_( this.getRecursiveChildCount() );
   goog.base( this, 'removeChildren' );
 };
