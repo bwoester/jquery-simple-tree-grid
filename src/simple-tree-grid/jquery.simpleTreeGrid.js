@@ -13,15 +13,11 @@
 // jquery-simple-tree-grid\src> --root_with_prefix="simple-tree-grid ../../simple-tree-grid" \
 // jquery-simple-tree-grid\src> > simple-tree-grid\deps.js
 
+goog.require('bwoester.simpleTreeGrid.DefaultBranchToggler');
+goog.require('bwoester.simpleTreeGrid.RowData');
 goog.require('bwoester.TreeNode');
 
-var bwoester = bwoester || {};
 
-bwoester.ternary = bwoester.ternary || {};
-
-bwoester.ternary.TRUE     = 1;
-bwoester.ternary.FALSE    = 2;
-bwoester.ternary.UNKNOWN  = 3;
 
 /**
  * @param {function (new:jQuery, (Object|null|string)=, (Object.<(function (jQuery.event=): ?|string)>|null)=): jQuery} $
@@ -52,10 +48,17 @@ $.widget( "bwoester.simpleTreeGrid" , {
      */
     depthList: [],
 
-    plugins: []
+    plugins: {
+      branchToggler: null
+    }
   },
 
   _rootNode: null,
+  _rowIdCounter: 0,
+
+  _getRowId: function() {
+    return this._rowIdCounter++;
+  },
 
   /**
    * Setup widget (eg. element creation, apply theming bind events etc.)
@@ -66,6 +69,16 @@ $.widget( "bwoester.simpleTreeGrid" , {
     var self = this;
 
     this._rootNode = new bwoester.TreeNode( '_root', null );
+
+    if (!this.options.plugins.branchToggler) {
+      this.options.plugins.branchToggler = new bwoester.simpleTreeGrid.DefaultBranchToggler();
+    }
+
+    for (var pluginId in this.options.plugins)
+    {
+      var plugin = this.options.plugins[ pluginId ];
+      plugin.init( this );
+    }
 
     var lastNode  = this._rootNode;
     var lastDepth = -1;
@@ -110,11 +123,13 @@ $.widget( "bwoester.simpleTreeGrid" , {
         lastNode.getParent().getParent().addChild( node );
       }
 
+      var rowData = new bwoester.simpleTreeGrid.RowData();
+      rowData.id        = self._getRowId();
+      rowData.dataNode  = node;
+      rowData.expanded  = bwoester.Ternary.UNKNOWN;
+
       // attach the node to the row.
-      row.data( self.widgetName, {
-        'node'    : node,
-        'expanded': bwoester.ternary.UNKNOWN
-      });
+      row.data( self.widgetName, rowData );
 
       lastNode  = node;
       lastDepth = depth;
@@ -126,13 +141,9 @@ $.widget( "bwoester.simpleTreeGrid" , {
     {
       var rowIndex = aExpandedNodes[i];
       var row = $(rows[rowIndex]);
-      var aRowData = row.data( self.widgetName );
-      aRowData['expanded'] = bwoester.ternary.TRUE;
+      var rowData = row.data( self.widgetName );
+      rowData.expanded = bwoester.Ternary.TRUE;
     }
-
-    this.element.children('tbody').dblclick( function(eventObject) {
-      self.toggle( $(eventObject.target).closest('tr') );
-    });
 
     // _create will automatically run the first time
     // this widget is called. Put the initial widget
@@ -166,10 +177,10 @@ $.widget( "bwoester.simpleTreeGrid" , {
       var rowData = row.data( self.widgetName );
 
       // if expanded, collapse
-      if (rowData['expanded'] === bwoester.ternary.TRUE) {
+      if (rowData.expanded === bwoester.Ternary.TRUE) {
         self._collapse( row );
       // if not expanded, expand
-      } else if (rowData['expanded'] === bwoester.ternary.FALSE) {
+      } else if (rowData.expanded === bwoester.Ternary.FALSE) {
         self._expand( row );
       // If we don't know, try to expand. This gives the widget a chance to
       // lazy load children, even if it wasn't provided with infos about
@@ -185,7 +196,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
    */
   _collapse: function( row ) {
     var rowData = row.data( this.widgetName );
-    var node    = rowData['node'];
+    var node    = rowData.dataNode;
 
     row = row.next();
     for (var i = 0; i < node.getRecursiveChildCount(); ++i) {
@@ -193,7 +204,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
       row = row.next();
     }
 
-    rowData['expanded'] = bwoester.ternary.FALSE;
+    rowData.expanded = bwoester.Ternary.FALSE;
   },
 
   /**
@@ -204,7 +215,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
     var self    = this;
 
     var rowData = row.data( self.widgetName );
-    var node    = rowData['node'];
+    var node    = rowData.dataNode;
 
     row = row.next();
     for (var i = 0; i < node.getChildCount(); ++i)
@@ -213,9 +224,9 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
       (function showChildrenIfExpanded() {
         var rowData = row.data( self.widgetName );
-        var node    = rowData['node'];
+        var node    = rowData.dataNode;
 
-        if (rowData['expanded'] === bwoester.ternary.TRUE)
+        if (rowData.expanded === bwoester.Ternary.TRUE)
         {
           for (var i = 0; i < node.getChildCount(); ++i)
           {
@@ -237,7 +248,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
       row = row.next();
     }
 
-    rowData['expanded'] = bwoester.ternary.TRUE;
+    rowData.expanded = bwoester.Ternary.TRUE;
   },
 
   /**
