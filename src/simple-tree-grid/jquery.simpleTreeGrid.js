@@ -83,14 +83,18 @@ $.widget( "bwoester.simpleTreeGrid" , {
     var lastNode  = this._rootNode;
     var lastDepth = -1;
     var rows      = this.element.find('> tbody > tr');
-    var aExpandedNodes = [];
 
-    rows.each( function(i)
+    var $rows = [];
+    rows.each( function(i, row) {
+      $rows.push( $(row) );
+    });
+
+    var aExpandedNodes = [];
+    $($rows).each( function(i, $row)
     {
-      var row   = $(this);
       var model = {};
 
-      row.children('td').each(function(n)
+      $row.children('td').each( function(n,td)
       {
         // TODO: we don't want the displayed value in our models. Instead, we
         //       need the raw data (iso formatted date time string vs.
@@ -99,7 +103,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
         //       - or provide more raw data to the initializer
         //       - or plugin? For simple use case (read only, no lazy loading)
         //         it is okay...
-        model[ self.options.columns[n] ] = $(this).text();
+        model[ self.options.columns[n] ] = $(td).text();
       });
 
       var node  = new bwoester.TreeNode( null, model );
@@ -129,7 +133,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
       rowData.expanded  = bwoester.Ternary.UNKNOWN;
 
       // attach the node to the row.
-      row.data( self.widgetName, rowData );
+      $row.data( self.widgetName, rowData );
 
       lastNode  = node;
       lastDepth = depth;
@@ -139,11 +143,18 @@ $.widget( "bwoester.simpleTreeGrid" , {
     // we don't support toggling the root node, so we start at index 1
     for (var i = 1; i < aExpandedNodes.length; ++i)
     {
-      var rowIndex = aExpandedNodes[i];
-      var row = $(rows[rowIndex]);
-      var rowData = row.data( self.widgetName );
+      var rowIndex  = aExpandedNodes[i];
+      var $row      = $rows[rowIndex];
+      var rowData   = $row.data( self.widgetName );
+
       rowData.expanded = bwoester.Ternary.TRUE;
     }
+
+    // The exiting rows have been prepared. Fire newRow event for each, to
+    // allow plugins to do their work.
+    $($rows).each( function(index,$row) {
+      self.element.trigger( 'newRow.simpleTreeGrid', [ $row ] );
+    });
 
     // _create will automatically run the first time
     // this widget is called. Put the initial widget
@@ -172,21 +183,21 @@ $.widget( "bwoester.simpleTreeGrid" , {
   // - apply effects?
   toggle: function( rows ) {
     var self = this;
-    rows.each( function(n) {
-      var row     = $(this);
-      var rowData = row.data( self.widgetName );
+    rows.each( function(index,row) {
+      var $row    = $(row);
+      var rowData = $row.data( self.widgetName );
 
       // if expanded, collapse
       if (rowData.expanded === bwoester.Ternary.TRUE) {
-        self._collapse( row );
+        self._collapse( $row );
       // if not expanded, expand
       } else if (rowData.expanded === bwoester.Ternary.FALSE) {
-        self._expand( row );
+        self._expand( $row );
       // If we don't know, try to expand. This gives the widget a chance to
       // lazy load children, even if it wasn't provided with infos about
       // children
       } else /* if (rowData['expanded'] === bwoester.ternary.UNKNOWN) */ {
-        self._expand( row );
+        self._expand( $row );
       }
     });
   },
@@ -194,44 +205,48 @@ $.widget( "bwoester.simpleTreeGrid" , {
   /**
    * Collapse all rows that contain to the branch. This includes sub branches.
    */
-  _collapse: function( row ) {
-    var rowData = row.data( this.widgetName );
-    var node    = rowData.dataNode;
+  _collapse: function( $row ) {
+    var self          = this;
+    var rowData       = $row.data( self.widgetName );
+    var node          = rowData.dataNode;
+    var $collapsedRow = $row;
 
-    row = row.next();
+    $row = $row.next();
     for (var i = 0; i < node.getRecursiveChildCount(); ++i) {
-      row.hide('fast');
-      row = row.next();
+      $row.hide('fast');
+      $row = $row.next();
     }
 
     rowData.expanded = bwoester.Ternary.FALSE;
+
+    self.element.trigger( 'collapsed.simpleTreeGrid', [ $collapsedRow ] );
   },
 
   /**
    * Expand rows that belong to the branch. For sub branches, check their
    * expanded flag.
    */
-  _expand: function( row ) {
-    var self    = this;
+  _expand: function( $row ) {
+    var self          = this;
+    var rowData       = $row.data( self.widgetName );
+    var node          = rowData.dataNode;
+    var $expandedRow  = $row;
 
-    var rowData = row.data( self.widgetName );
-    var node    = rowData.dataNode;
-
-    row = row.next();
+    $row = $row.next();
     for (var i = 0; i < node.getChildCount(); ++i)
     {
-      row.show('fast');
+      $row.show('fast');
 
       (function showChildrenIfExpanded() {
-        var rowData = row.data( self.widgetName );
+        var rowData = $row.data( self.widgetName );
         var node    = rowData.dataNode;
 
         if (rowData.expanded === bwoester.Ternary.TRUE)
         {
           for (var i = 0; i < node.getChildCount(); ++i)
           {
-            row = row.next();
-            row.show('fast');
+            $row = $row.next();
+            $row.show('fast');
             showChildrenIfExpanded();
           }
         }
@@ -239,16 +254,18 @@ $.widget( "bwoester.simpleTreeGrid" , {
         {
           for (var i = 0; i < node.getChildCount(); ++i)
           {
-            row = row.next();
+            $row = $row.next();
             showChildrenIfExpanded();
           }
         }
       })();
 
-      row = row.next();
+      $row = $row.next();
     }
 
     rowData.expanded = bwoester.Ternary.TRUE;
+
+    self.element.trigger( 'expanded.simpleTreeGrid', [ $expandedRow ] );
   },
 
   /**
