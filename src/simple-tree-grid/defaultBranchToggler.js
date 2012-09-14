@@ -21,14 +21,6 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.init = function( simpleTr
 
   self.simpleTreeGrid_ = simpleTreeGrid;
 
-  simpleTreeGrid.element.children('tbody').click( function(eventObject) {
-    var $row = $(eventObject.target).closest('tr');
-    var $icon = $row.find('td:first > i:first');
-    if (eventObject.target == $icon[0]) {
-      simpleTreeGrid.toggle( $row );
-    }
-  });
-
   simpleTreeGrid.element.bind( 'newRow.simpleTreeGrid', function( e, $row ) {
     self.decorate( $row );
   });
@@ -63,15 +55,28 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorate = function( $row
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateCollapsed = function( $row ) {
-  $row.children('td:first').prepend( '<i class="icon-plus"></i>' );
+bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateCollapsed = function( $row )
+{
+  var self = this;
+  $row.children('td:first')
+    .prepend( '<i class="icon-plus" style="cursor: pointer;"></i>' )
+    .children( 'i:first' )
+      .click( function(eventObject) {
+        self.simpleTreeGrid_.toggle( $row );
+      });
 }
 
 /**
  * @public
  */
 bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateExpanded = function( $row ) {
-  $row.children('td:first').prepend( '<i class="icon-minus"></i>' );
+  var self = this;
+  $row.children('td:first')
+    .prepend( '<i class="icon-minus" style="cursor: pointer;"></i>' )
+    .children( 'i:first' )
+      .click( function(eventObject) {
+        self.simpleTreeGrid_.toggle( $row );
+      });
 }
 
 /**
