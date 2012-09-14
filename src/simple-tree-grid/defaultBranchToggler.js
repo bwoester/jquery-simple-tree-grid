@@ -21,8 +21,12 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.init = function( simpleTr
 
   self.simpleTreeGrid_ = simpleTreeGrid;
 
-  simpleTreeGrid.element.children('tbody').dblclick( function(eventObject) {
-    simpleTreeGrid.toggle( $(eventObject.target).closest('tr') );
+  simpleTreeGrid.element.children('tbody').click( function(eventObject) {
+    var $row = $(eventObject.target).closest('tr');
+    var $icon = $row.find('td:first > i:first');
+    if (eventObject.target == $icon[0]) {
+      simpleTreeGrid.toggle( $row );
+    }
   });
 
   simpleTreeGrid.element.bind( 'newRow.simpleTreeGrid', function( e, $row ) {
