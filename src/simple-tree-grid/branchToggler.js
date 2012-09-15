@@ -1,21 +1,21 @@
 
-goog.provide('bwoester.simpleTreeGrid.DefaultBranchToggler');
+goog.provide('bwoester.simpleTreeGrid.BranchToggler');
 
 /**
  * @constructor
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler = function() {
+bwoester.simpleTreeGrid.BranchToggler = function() {
 }
 
 /**
  * @private
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.simpleTreeGrid_ = null;
+bwoester.simpleTreeGrid.BranchToggler.prototype.simpleTreeGrid_ = null;
 
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.init = function( simpleTreeGrid )
+bwoester.simpleTreeGrid.BranchToggler.prototype.init = function( simpleTreeGrid )
 {
   var self = this;
 
@@ -39,7 +39,7 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.init = function( simpleTr
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorate = function( $row )
+bwoester.simpleTreeGrid.BranchToggler.prototype.decorate = function( $row )
 {
   var rowData = $row.data( this.simpleTreeGrid_.widgetName );
 
@@ -55,7 +55,7 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorate = function( $row
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateCollapsed = function( $row )
+bwoester.simpleTreeGrid.BranchToggler.prototype.decorateCollapsed = function( $row )
 {
   var self = this;
   $row.children('td:first')
@@ -69,7 +69,7 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateCollapsed = funct
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateExpanded = function( $row ) {
+bwoester.simpleTreeGrid.BranchToggler.prototype.decorateExpanded = function( $row ) {
   var self = this;
   $row.children('td:first')
     .prepend( '<i class="icon-minus" style="cursor: pointer;"></i>' )
@@ -82,13 +82,13 @@ bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateExpanded = functi
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.decorateUnknown = function( $row ) {
+bwoester.simpleTreeGrid.BranchToggler.prototype.decorateUnknown = function( $row ) {
   this.decorateCollapsed( $row );
 }
 
 /**
  * @public
  */
-bwoester.simpleTreeGrid.DefaultBranchToggler.prototype.removeDecoration = function( $row ) {
+bwoester.simpleTreeGrid.BranchToggler.prototype.removeDecoration = function( $row ) {
   $row.find('td:first > i:first').remove();
 }

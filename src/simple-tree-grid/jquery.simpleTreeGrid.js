@@ -13,7 +13,7 @@
 // jquery-simple-tree-grid\src> --root_with_prefix="simple-tree-grid ../../simple-tree-grid" \
 // jquery-simple-tree-grid\src> > simple-tree-grid\deps.js
 
-goog.require('bwoester.simpleTreeGrid.DefaultBranchToggler');
+goog.require('bwoester.simpleTreeGrid.BranchToggler');
 goog.require('bwoester.simpleTreeGrid.RowData');
 goog.require('bwoester.TreeNode');
 
@@ -71,7 +71,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
     this._rootNode = new bwoester.TreeNode( '_root', null );
 
     if (!this.options.plugins.branchToggler) {
-      this.options.plugins.branchToggler = new bwoester.simpleTreeGrid.DefaultBranchToggler();
+      this.options.plugins.branchToggler = new bwoester.simpleTreeGrid.BranchToggler();
     }
 
     for (var pluginId in this.options.plugins)
