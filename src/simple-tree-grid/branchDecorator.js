@@ -23,7 +23,17 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.simpleTreeGrid_ = null;
  * @public
  * @type {string}
  */
-bwoester.simpleTreeGrid.BranchDecorator.prototype.collapsedDecoration = '<i class="icon-plus" style="cursor: pointer;"></i>';
+bwoester.simpleTreeGrid.BranchDecorator.prototype.collapsedDecoration = ''
+  + '<div style="display: inline-block;'
+  +             'vertical-align: middle;'
+  +             'margin-right: 2px;'
+  +             'border-color: transparent transparent transparent #AAA;'
+  +             'border-style: solid;'
+  +             'border-width: 6px;'
+  +             'height:0;'
+  +             'width:0;'
+  +             'cursor: pointer;">'
+  + '</div>';
 
 /**
  * Html string to insert at the beginning of the first column of the row.
@@ -31,7 +41,17 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.collapsedDecoration = '<i clas
  * @public
  * @type {string}
  */
-bwoester.simpleTreeGrid.BranchDecorator.prototype.expandedDecoration = '<i class="icon-minus" style="cursor: pointer;"></i>';
+bwoester.simpleTreeGrid.BranchDecorator.prototype.expandedDecoration = ''
+  + '<div style="display: inline-block;'
+  +             'vertical-align: middle;'
+  +             'margin-right: 6px;'
+  +             'border-color: transparent #AAA #AAA transparent;'
+  +             'border-style: solid;'
+  +             'border-width: 5px;'
+  +             'height:0;'
+  +             'width:0;'
+  +             'cursor: pointer;">'
+  + '</div>';
 
 /**
  * jQuery selector to match the decoration. Will be used to remove decoration
@@ -40,7 +60,7 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.expandedDecoration = '<i class
  * @public
  * @type {string}
  */
-bwoester.simpleTreeGrid.BranchDecorator.prototype.decorationSelector = 'i:first';
+bwoester.simpleTreeGrid.BranchDecorator.prototype.decorationSelector = 'div:first';
 
 /**
  * @public
