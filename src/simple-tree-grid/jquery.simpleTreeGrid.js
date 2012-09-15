@@ -96,9 +96,17 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
     for (var componentId in this.options.components)
     {
-      var config = this.options.components[ componentId ];
-      var component = bwoester.Factory.create( config['class'] );
+      var config    = this.options.components[ componentId ];
+      var className = config['class'];
+      var component = bwoester.Factory.create( className );
+
+      delete config['class'];
+      for (var propertyId in config) {
+        component[ propertyId ] = config[ propertyId ];
+      }
+
       component.init( self );
+
       this.options.components[ componentId ] = component;
     }
 
