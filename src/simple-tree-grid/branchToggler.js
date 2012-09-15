@@ -1,11 +1,13 @@
 goog.provide('bwoester.simpleTreeGrid.BranchToggler');
 
+goog.require('bwoester.simpleTreeGrid.IComponent');
 goog.require('bwoester.Ternary');
 
 
 
 /**
  * @constructor
+ * @implements {bwoester.simpleTreeGrid.IComponent}
  */
 bwoester.simpleTreeGrid.BranchToggler = function() {
 }
@@ -20,7 +22,13 @@ bwoester.simpleTreeGrid.BranchToggler.prototype.simpleTreeGrid_ = null;
  */
 bwoester.simpleTreeGrid.BranchToggler.prototype.init = function( simpleTreeGrid )
 {
-  this.simpleTreeGrid_ = simpleTreeGrid;
+  var self = this;
+
+  self.simpleTreeGrid_ = simpleTreeGrid;
+
+  simpleTreeGrid.element.bind( 'toggle.simpleTreeGrid', function( e, row ) {
+    self.toggle( row );
+  });
 }
 
 /**
@@ -40,7 +48,7 @@ bwoester.simpleTreeGrid.BranchToggler.prototype.toggle = function( row )
   // If we don't know, try to expand. This gives the widget a chance to
   // lazy load children, even if it wasn't provided with infos about
   // children
-  } else /* if (rowData['expanded'] === bwoester.ternary.UNKNOWN) */ {
+  } else /* if (rowData['expanded'] === bwoester.Ternary.UNKNOWN) */ {
     this._expand( $row );
   }
 }

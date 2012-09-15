@@ -1,11 +1,13 @@
 goog.provide('bwoester.simpleTreeGrid.BranchDecorator');
 
+goog.require('bwoester.simpleTreeGrid.IComponent');
 goog.require('bwoester.Ternary');
 
 
 
 /**
  * @constructor
+ * @implements {bwoester.simpleTreeGrid.IComponent}
  */
 bwoester.simpleTreeGrid.BranchDecorator = function() {
 }
@@ -50,7 +52,7 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.decorate = function( $row )
     this.decorateExpanded( $row );
   } else if (rowData.expanded === bwoester.Ternary.FALSE) {
     this.decorateCollapsed( $row );
-  } else /* if (rowData['expanded'] === bwoester.ternary.UNKNOWN) */ {
+  } else /* if (rowData['expanded'] === bwoester.Ternary.UNKNOWN) */ {
     this.decorateUnknown( $row );
   }
 }

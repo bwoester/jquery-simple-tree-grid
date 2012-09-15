@@ -1,4 +1,3 @@
-
 goog.provide('bwoester.TreeNode');
 
 goog.require('goog.structs.TreeNode');

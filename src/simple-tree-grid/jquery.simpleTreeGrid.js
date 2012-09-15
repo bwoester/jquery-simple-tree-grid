@@ -13,6 +13,8 @@
 // jquery-simple-tree-grid\src> --root_with_prefix="simple-tree-grid ../../../simple-tree-grid" \
 // jquery-simple-tree-grid\src> > simple-tree-grid\deps.js
 
+
+goog.require('bwoester.Factory');
 goog.require('bwoester.simpleTreeGrid.BranchDecorator');
 goog.require('bwoester.simpleTreeGrid.BranchToggler');
 goog.require('bwoester.simpleTreeGrid.RowData');
@@ -49,26 +51,30 @@ $.widget( "bwoester.simpleTreeGrid" , {
      */
     depthList: [],
 
-    /**
-     * Component that toggles the branches.
-     * If not set, bwoester.simpleTreeGrid.BranchToggler will be used as
-     * default. This class shows and hides branches by setting the visibility
-     * of related rows. Alternative implementations might choose to remove
-     * rows completely from DOM.
-     */
-    branchToggler: null,
+    components: {
+      /**
+       * Plugin that decorates collapsed/ expanded branches with visual hints.
+       * If not set, bwoester.simpleTreeGrid.BranchDecorator will be used as
+       * default. This class will use twitter bootstrap's markup for +/- icons.
+       * (an empty i-element with a certain class is inserted at the beginning
+       * of the first column of the row)
+       */
+      branchDecorator: {
+        'class': 'bwoester.simpleTreeGrid.BranchDecorator'
+      },
 
-    /**
-     * Component that decorates collapsed/ expanded branches with visual hints.
-     * If not set, bwoester.simpleTreeGrid.BranchDecorator will be used as
-     * default. This class will use twitter bootstrap's markup for +/- icons.
-     * (an empty i-element with a certain class is inserted at the beginning
-     * of the first column of the row)
-     */
-    branchDecorator: null,
-
-    plugins: {
+      /**
+       * Component that toggles the branches.
+       * If not set, bwoester.simpleTreeGrid.BranchToggler will be used as
+       * default. This class shows and hides branches by setting the visibility
+       * of related rows. Alternative implementations might choose to remove
+       * rows completely from DOM.
+       */
+      branchToggler: {
+        'class': 'bwoester.simpleTreeGrid.BranchToggler'
+      }
     }
+
   },
 
   _rootNode: null,
@@ -88,21 +94,12 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
     this._rootNode = new bwoester.TreeNode( '_root', null );
 
-    if (!this.options.branchToggler) {
-      this.branchToggler = new bwoester.simpleTreeGrid.BranchToggler();
-    }
-
-    if (!this.options.branchDecorator) {
-      this.branchDecorator = new bwoester.simpleTreeGrid.BranchDecorator();
-    }
-
-    this.branchToggler.init( this );
-    this.branchDecorator.init( this );
-
-    for (var pluginId in this.options.plugins)
+    for (var componentId in this.options.components)
     {
-      var plugin = this.options.plugins[ pluginId ];
-      plugin.init( this );
+      var config = this.options.components[ componentId ];
+      var component = bwoester.Factory.create( config['class'] );
+      component.init( self );
+      this.options.components[ componentId ] = component;
     }
 
     // TODO: delegate work to a Reader (html -> data structure)
@@ -206,7 +203,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
   toggle: function( $rows ) {
     var self = this;
     $rows.each( function(index,row) {
-      self.branchToggler.toggle( row );
+      self.element.trigger( 'toggle.simpleTreeGrid', [ row ] );
     });
   },
 
