@@ -15,6 +15,11 @@ bwoester.simpleTreeGrid.BranchDecorator = function() {
 /**
  * @private
  */
+bwoester.simpleTreeGrid.BranchDecorator.registeredStyles_ = [];
+
+/**
+ * @private
+ */
 bwoester.simpleTreeGrid.BranchDecorator.prototype.simpleTreeGrid_ = null;
 
 /**
@@ -24,16 +29,7 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.simpleTreeGrid_ = null;
  * @type {string}
  */
 bwoester.simpleTreeGrid.BranchDecorator.prototype.collapsedDecoration = ''
-  + '<div style="display: inline-block;'
-  +             'vertical-align: middle;'
-  +             'margin-right: 2px;'
-  +             'border-color: transparent transparent transparent #AAA;'
-  +             'border-style: solid;'
-  +             'border-width: 6px;'
-  +             'height:0;'
-  +             'width:0;'
-  +             'cursor: pointer;">'
-  + '</div>';
+  + '<div class="simpleTreeGrid-collapsedRow"></div>';
 
 /**
  * Html string to insert at the beginning of the first column of the row.
@@ -42,16 +38,7 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.collapsedDecoration = ''
  * @type {string}
  */
 bwoester.simpleTreeGrid.BranchDecorator.prototype.expandedDecoration = ''
-  + '<div style="display: inline-block;'
-  +             'vertical-align: middle;'
-  +             'margin-right: 6px;'
-  +             'border-color: transparent #AAA #AAA transparent;'
-  +             'border-style: solid;'
-  +             'border-width: 5px;'
-  +             'height:0;'
-  +             'width:0;'
-  +             'cursor: pointer;">'
-  + '</div>';
+  + '<div class="simpleTreeGrid-expandedRow"></div>';
 
 /**
  * jQuery selector to match the decoration. Will be used to remove decoration
@@ -60,7 +47,9 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.expandedDecoration = ''
  * @public
  * @type {string}
  */
-bwoester.simpleTreeGrid.BranchDecorator.prototype.decorationSelector = 'div:first';
+bwoester.simpleTreeGrid.BranchDecorator.prototype.decorationSelector = ''
+  + 'div.simpleTreeGrid-collapsedRow:first,'
+  + 'div.simpleTreeGrid-expandedRow:first';
 
 /**
  * @public
@@ -70,6 +59,13 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.init = function( simpleTreeGri
   var self = this;
 
   self.simpleTreeGrid_ = simpleTreeGrid;
+
+  var style = this.getStyle();
+  if (bwoester.simpleTreeGrid.BranchDecorator.registeredStyles_.indexOf(style) === -1)
+  {
+    bwoester.simpleTreeGrid.BranchDecorator.registeredStyles_.push( style );
+    $('head').append( style );
+  }
 
   simpleTreeGrid.element.bind( 'newRow.simpleTreeGrid', function( e, $row ) {
     self.decorate( $row );
@@ -84,6 +80,49 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.init = function( simpleTreeGri
     self.removeDecoration( $row );
     self.decorateExpanded( $row );
   });
+}
+
+/**
+ * @public
+ */
+bwoester.simpleTreeGrid.BranchDecorator.prototype.getStyle = function()
+{
+  var style = ''
+  + '<style type="text/css">'
+  + '  div.simpleTreeGrid-collapsedRow {'
+  + '    display: inline-block;'
+  + '    vertical-align: middle;'
+  + '    margin-right: 2px;'
+  + '    border-color: transparent transparent transparent #AAA;'
+  + '    border-style: solid;'
+  + '    border-width: 6px;'
+  + '    height: 0;'
+  + '    width: 0;'
+  + '    cursor: pointer;'
+  + '  }'
+  + ''
+  + '  div.simpleTreeGrid-collapsedRow:hover {'
+  + '    border-color: transparent transparent transparent #777;'
+  + '  }'
+  + ''
+  + '  div.simpleTreeGrid-expandedRow {'
+  + '    display: inline-block;'
+  + '    vertical-align: middle;'
+  + '    margin-right: 6px;'
+  + '    border-color: transparent #AAA #AAA transparent;'
+  + '    border-style: solid;'
+  + '    border-width: 5px;'
+  + '    height: 0;'
+  + '    width: 0;'
+  + '    cursor: pointer;'
+  + '  }'
+  + ''
+  + '  div.simpleTreeGrid-expandedRow:hover {'
+  + '    border-color: transparent #777 #777 transparent;'
+  + '  }'
+  + '</style>';
+
+  return style;
 }
 
 /**
