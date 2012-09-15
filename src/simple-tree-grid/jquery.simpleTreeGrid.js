@@ -10,9 +10,10 @@
 //
 // > cd jquery-simple-tree-grid\src
 // jquery-simple-tree-grid\src> python.exe closure-library\closure\bin\build\depswriter.py \
-// jquery-simple-tree-grid\src> --root_with_prefix="simple-tree-grid ../../simple-tree-grid" \
+// jquery-simple-tree-grid\src> --root_with_prefix="simple-tree-grid ../../../simple-tree-grid" \
 // jquery-simple-tree-grid\src> > simple-tree-grid\deps.js
 
+goog.require('bwoester.simpleTreeGrid.BranchDecorator');
 goog.require('bwoester.simpleTreeGrid.BranchToggler');
 goog.require('bwoester.simpleTreeGrid.RowData');
 goog.require('bwoester.TreeNode');
@@ -48,8 +49,25 @@ $.widget( "bwoester.simpleTreeGrid" , {
      */
     depthList: [],
 
+    /**
+     * Component that toggles the branches.
+     * If not set, bwoester.simpleTreeGrid.BranchToggler will be used as
+     * default. This class shows and hides branches by setting the visibility
+     * of related rows. Alternative implementations might choose to remove
+     * rows completely from DOM.
+     */
+    branchToggler: null,
+
+    /**
+     * Component that decorates collapsed/ expanded branches with visual hints.
+     * If not set, bwoester.simpleTreeGrid.BranchDecorator will be used as
+     * default. This class will use twitter bootstrap's markup for +/- icons.
+     * (an empty i-element with a certain class is inserted at the beginning
+     * of the first column of the row)
+     */
+    branchDecorator: null,
+
     plugins: {
-      branchToggler: null
     }
   },
 
@@ -70,9 +88,16 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
     this._rootNode = new bwoester.TreeNode( '_root', null );
 
-    if (!this.options.plugins.branchToggler) {
-      this.options.plugins.branchToggler = new bwoester.simpleTreeGrid.BranchToggler();
+    if (!this.options.branchToggler) {
+      this.branchToggler = new bwoester.simpleTreeGrid.BranchToggler();
     }
+
+    if (!this.options.branchDecorator) {
+      this.branchDecorator = new bwoester.simpleTreeGrid.BranchDecorator();
+    }
+
+    this.branchToggler.init( this );
+    this.branchDecorator.init( this );
 
     for (var pluginId in this.options.plugins)
     {
@@ -80,6 +105,7 @@ $.widget( "bwoester.simpleTreeGrid" , {
       plugin.init( this );
     }
 
+    // TODO: delegate work to a Reader (html -> data structure)
     var lastNode  = this._rootNode;
     var lastDepth = -1;
     var rows      = this.element.find('> tbody > tr');
@@ -177,95 +203,11 @@ $.widget( "bwoester.simpleTreeGrid" , {
       // calling the base widget
   },
 
-  // TODO another extension point for plugins:
-  // - hide children?
-  // - remove them from DOM?
-  // - apply effects?
-  toggle: function( rows ) {
+  toggle: function( $rows ) {
     var self = this;
-    rows.each( function(index,row) {
-      var $row    = $(row);
-      var rowData = $row.data( self.widgetName );
-
-      // if expanded, collapse
-      if (rowData.expanded === bwoester.Ternary.TRUE) {
-        self._collapse( $row );
-      // if not expanded, expand
-      } else if (rowData.expanded === bwoester.Ternary.FALSE) {
-        self._expand( $row );
-      // If we don't know, try to expand. This gives the widget a chance to
-      // lazy load children, even if it wasn't provided with infos about
-      // children
-      } else /* if (rowData['expanded'] === bwoester.ternary.UNKNOWN) */ {
-        self._expand( $row );
-      }
+    $rows.each( function(index,row) {
+      self.branchToggler.toggle( row );
     });
-  },
-
-  /**
-   * Collapse all rows that contain to the branch. This includes sub branches.
-   */
-  _collapse: function( $row ) {
-    var self          = this;
-    var rowData       = $row.data( self.widgetName );
-    var node          = rowData.dataNode;
-    var $collapsedRow = $row;
-
-    $row = $row.next();
-    for (var i = 0; i < node.getRecursiveChildCount(); ++i) {
-      $row.hide('fast');
-      $row = $row.next();
-    }
-
-    rowData.expanded = bwoester.Ternary.FALSE;
-
-    self.element.trigger( 'collapsed.simpleTreeGrid', [ $collapsedRow ] );
-  },
-
-  /**
-   * Expand rows that belong to the branch. For sub branches, check their
-   * expanded flag.
-   */
-  _expand: function( $row ) {
-    var self          = this;
-    var rowData       = $row.data( self.widgetName );
-    var node          = rowData.dataNode;
-    var $expandedRow  = $row;
-
-    $row = $row.next();
-    for (var i = 0; i < node.getChildCount(); ++i)
-    {
-      $row.show('fast');
-
-      (function showChildrenIfExpanded() {
-        var rowData = $row.data( self.widgetName );
-        var node    = rowData.dataNode;
-
-        if (rowData.expanded === bwoester.Ternary.TRUE)
-        {
-          for (var i = 0; i < node.getChildCount(); ++i)
-          {
-            $row = $row.next();
-            $row.show('fast');
-            showChildrenIfExpanded();
-          }
-        }
-        else
-        {
-          for (var i = 0; i < node.getChildCount(); ++i)
-          {
-            $row = $row.next();
-            showChildrenIfExpanded();
-          }
-        }
-      })();
-
-      $row = $row.next();
-    }
-
-    rowData.expanded = bwoester.Ternary.TRUE;
-
-    self.element.trigger( 'expanded.simpleTreeGrid', [ $expandedRow ] );
   },
 
   /**
