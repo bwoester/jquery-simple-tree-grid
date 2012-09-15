@@ -36,9 +36,20 @@ bwoester.simpleTreeGrid.RowData.prototype.expanded = bwoester.Ternary.UNKNOWN;
 
 /**
  * @public
- * @type {number}
+ * @type {string}
  */
-bwoester.simpleTreeGrid.RowData.prototype.id = 0;
+bwoester.simpleTreeGrid.RowData.prototype.modelIdProperty = 'id';
+
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @public
+ */
+bwoester.simpleTreeGrid.RowData.prototype.getId = function()
+{
+  var model = this.dataNode.getValue();
+  return model[ this.modelIdProperty ];
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -40,6 +40,14 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
   //Options to be used as defaults
   options: {
+    model: {
+      id: undefined
+    },
+    /**
+     * Property name of the models id. Defaults to 'id', but could also be
+     * something like 'absolutePath' for filenames.
+     */
+    modelIdProperty: 'id',
     /**
      * Used to build model. For example ['id', 'name'] will result in models
      * with id and name attribute.
@@ -66,9 +74,13 @@ $.widget( "bwoester.simpleTreeGrid" , {
       /**
        * Component that toggles the branches.
        * If not set, bwoester.simpleTreeGrid.BranchToggler will be used as
-       * default. This class shows and hides branches by setting the visibility
-       * of related rows. Alternative implementations might choose to remove
-       * rows completely from DOM.
+       * default. This class shows and hides branches by detaching and
+       * re-inserting related rows. This way, there are no problems with
+       * striped tables, where it is important that collapsed branches always
+       * contain an even number of children (to ensure the collapsed branch and
+       * his next sibling will be displayed in different colors).
+       * However, alternative implementations might choose to toggle branches
+       * by only hiding and showing rows while leaving them in the DOM.
        */
       branchToggler: {
         'class': 'bwoester.simpleTreeGrid.BranchToggler'
@@ -78,10 +90,11 @@ $.widget( "bwoester.simpleTreeGrid" , {
   },
 
   _rootNode: null,
-  _rowIdCounter: 0,
+  _idCounter: 0,
+  _rows: {},
 
-  _getRowId: function() {
-    return this._rowIdCounter++;
+  _getId: function() {
+    return this._idCounter++;
   },
 
   /**
@@ -123,8 +136,12 @@ $.widget( "bwoester.simpleTreeGrid" , {
     var aExpandedNodes = [];
     $($rows).each( function(i, $row)
     {
-      var model = {};
+      // Create a new model. Extend from options.model to make sure the new
+      // model has all properties and default values that have been specified
+      // by the user.
+      var model = $.extend( {}, self.options.model );
 
+      // read data from table cells and fill model
       $row.children('td').each( function(n,td)
       {
         // TODO: we don't want the displayed value in our models. Instead, we
@@ -136,6 +153,12 @@ $.widget( "bwoester.simpleTreeGrid" , {
         //         it is okay...
         model[ self.options.columns[n] ] = $(td).text();
       });
+
+      // ensure the model has an id, generate one if it was not provided in
+      // table cells.
+      if (model[ self.options.modelId ] == undefined) {
+        model[ self.options.modelIdProperty ] = self._getId();
+      }
 
       var node  = new bwoester.TreeNode( null, model );
       var depth = self.options.depthList[i];
@@ -159,9 +182,9 @@ $.widget( "bwoester.simpleTreeGrid" , {
       }
 
       var rowData = new bwoester.simpleTreeGrid.RowData();
-      rowData.id        = self._getRowId();
-      rowData.dataNode  = node;
-      rowData.expanded  = bwoester.Ternary.UNKNOWN;
+      rowData.modelIdProperty = self.options.modelIdProperty;
+      rowData.dataNode        = node;
+      rowData.expanded        = bwoester.Ternary.UNKNOWN;
 
       // attach the node to the row.
       $row.data( self.widgetName, rowData );
@@ -180,6 +203,14 @@ $.widget( "bwoester.simpleTreeGrid" , {
 
       rowData.expanded = bwoester.Ternary.TRUE;
     }
+
+    // Insert rows in the _rows hash, for accessing them by id.
+    // TODO: this prevents the tree grid from displaying graphs. Every data
+    //       node can only be associated with one row...
+    $($rows).each( function(index,$row) {
+      var rowData = $row.data( self.widgetName );
+      self._rows[ rowData.getId() ] = $row[0];
+    });
 
     // The exiting rows have been prepared. Fire newRow event for each, to
     // allow plugins to do their work.
@@ -213,6 +244,20 @@ $.widget( "bwoester.simpleTreeGrid" , {
     $rows.each( function(index,row) {
       self.element.trigger( 'toggle.simpleTreeGrid', [ row ] );
     });
+  },
+
+  getRowByNode: function( node ) {
+    var model = node.getValue();
+    return this.getRowByModel( model );
+  },
+
+  getRowByModel: function( model ) {
+    var id = model[ this.options.modelIdProperty ];
+    return this.getRowById( id );
+  },
+
+  getRowById: function( id ) {
+    return this._rows[ id ];
   },
 
   /**

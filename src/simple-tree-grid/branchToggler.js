@@ -59,19 +59,18 @@ bwoester.simpleTreeGrid.BranchToggler.prototype.toggle = function( row )
  */
 bwoester.simpleTreeGrid.BranchToggler.prototype._collapse = function( $row )
 {
-  var rowData       = $row.data( this.simpleTreeGrid_.widgetName );
-  var node          = rowData.dataNode;
-  var $collapsedRow = $row;
+  var self    = this;
+  var rowData = $row.data( this.simpleTreeGrid_.widgetName );
+  var node    = rowData.dataNode;
 
-  $row = $row.next();
-  for (var i = 0; i < node.getRecursiveChildCount(); ++i) {
-    $row.hide('fast');
-    $row = $row.next();
-  }
+  node.forEachDescendant( function(node){
+    var row = self.simpleTreeGrid_.getRowByNode( node );
+    $(row).detach();
+  });
 
   rowData.expanded = bwoester.Ternary.FALSE;
 
-  this.simpleTreeGrid_.element.trigger( 'collapsed.simpleTreeGrid', [ $collapsedRow ] );
+  this.simpleTreeGrid_.element.trigger( 'collapsed.simpleTreeGrid', [ $row ] );
 }
 
  /**
@@ -81,43 +80,32 @@ bwoester.simpleTreeGrid.BranchToggler.prototype._collapse = function( $row )
   */
 bwoester.simpleTreeGrid.BranchToggler.prototype._expand = function( $row )
 {
-  var self          = this;
-  var rowData       = $row.data( self.simpleTreeGrid_.widgetName );
-  var node          = rowData.dataNode;
-  var $expandedRow  = $row;
+  var self = this;
 
-  $row = $row.next();
-  for (var i = 0; i < node.getChildCount(); ++i)
+  var $insertTarget = $row;
+
+  (function insertChildren( $row )
   {
-    $row.show('fast');
+    var rowData = $row.data( self.simpleTreeGrid_.widgetName );
+    var node    = rowData.dataNode;
 
-    (function showChildrenIfExpanded() {
-      var rowData = $row.data( self.simpleTreeGrid_.widgetName );
-      var node    = rowData.dataNode;
+    node.forEachChild( function(child){
+      var childRow   = self.simpleTreeGrid_.getRowByNode( child );
+      var $childRow  = $(childRow);
 
-      if (rowData.expanded === bwoester.Ternary.TRUE)
-      {
-        for (var i = 0; i < node.getChildCount(); ++i)
-        {
-          $row = $row.next();
-          $row.show('fast');
-          showChildrenIfExpanded();
-        }
+      $childRow.insertAfter( $insertTarget );
+      $insertTarget = $childRow;
+
+      var childRowData = $childRow.data( self.simpleTreeGrid_.widgetName );
+      if (childRowData.expanded === bwoester.Ternary.TRUE) {
+        insertChildren( $childRow );
       }
-      else
-      {
-        for (var i = 0; i < node.getChildCount(); ++i)
-        {
-          $row = $row.next();
-          showChildrenIfExpanded();
-        }
-      }
-    })();
+    });
 
-    $row = $row.next();
-  }
+  })( $row );
 
+  var rowData = $row.data( self.simpleTreeGrid_.widgetName );
   rowData.expanded = bwoester.Ternary.TRUE;
 
-  self.simpleTreeGrid_.element.trigger( 'expanded.simpleTreeGrid', [ $expandedRow ] );
+  self.simpleTreeGrid_.element.trigger( 'expanded.simpleTreeGrid', [ $row ] );
 }
