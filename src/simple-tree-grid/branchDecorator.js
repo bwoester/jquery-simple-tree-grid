@@ -18,6 +18,31 @@ bwoester.simpleTreeGrid.BranchDecorator = function() {
 bwoester.simpleTreeGrid.BranchDecorator.prototype.simpleTreeGrid_ = null;
 
 /**
+ * Html string to insert at the beginning of the first column of the row.
+ * Should visualize a collapsed branch. Might be a "+".
+ * @public
+ * @type {string}
+ */
+bwoester.simpleTreeGrid.BranchDecorator.prototype.collapsedDecoration = '<i class="icon-plus" style="cursor: pointer;"></i>';
+
+/**
+ * Html string to insert at the beginning of the first column of the row.
+ * Should visualize an expanded branch. Might be a "-".
+ * @public
+ * @type {string}
+ */
+bwoester.simpleTreeGrid.BranchDecorator.prototype.expandedDecoration = '<i class="icon-minus" style="cursor: pointer;"></i>';
+
+/**
+ * jQuery selector to match the decoration. Will be used to remove decoration
+ * when the branch is toggled as well as to bind a "clicked" event handler to
+ * the decoration.
+ * @public
+ * @type {string}
+ */
+bwoester.simpleTreeGrid.BranchDecorator.prototype.decorationSelector = 'i:first';
+
+/**
  * @public
  */
 bwoester.simpleTreeGrid.BranchDecorator.prototype.init = function( simpleTreeGrid )
@@ -64,8 +89,8 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.decorateCollapsed = function( 
 {
   var self = this;
   $row.children('td:first')
-    .prepend( '<i class="icon-plus" style="cursor: pointer;"></i>' )
-    .children( 'i:first' )
+    .prepend( self.collapsedDecoration )
+    .children( self.decorationSelector )
       .click( function(eventObject) {
         self.simpleTreeGrid_.toggle( $row );
       });
@@ -77,8 +102,8 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.decorateCollapsed = function( 
 bwoester.simpleTreeGrid.BranchDecorator.prototype.decorateExpanded = function( $row ) {
   var self = this;
   $row.children('td:first')
-    .prepend( '<i class="icon-minus" style="cursor: pointer;"></i>' )
-    .children( 'i:first' )
+    .prepend( self.expandedDecoration )
+    .children( self.decorationSelector )
       .click( function(eventObject) {
         self.simpleTreeGrid_.toggle( $row );
       });
@@ -95,5 +120,6 @@ bwoester.simpleTreeGrid.BranchDecorator.prototype.decorateUnknown = function( $r
  * @public
  */
 bwoester.simpleTreeGrid.BranchDecorator.prototype.removeDecoration = function( $row ) {
-  $row.find('td:first > i:first').remove();
+  var selector = 'td:first > ' + this.decorationSelector;
+  $row.find(selector).remove();
 }
